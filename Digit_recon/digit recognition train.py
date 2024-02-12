@@ -1,0 +1,182 @@
+## digit recognition
+from torch.utils.data import DataLoader
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+import torch
+from torchvision import datasets
+from torchvision.transforms import ToTensor
+import math
+import numpy
+import matplotlib.pyplot as plt
+from random import randint
+
+# load data
+train_data = datasets.MNIST(
+    root="data",
+    train=True,
+    download=True,
+    transform=ToTensor()
+)
+test_data = datasets.MNIST(
+    root="data",
+    train=False,
+    download=True,
+    transform=ToTensor()
+)
+
+
+loaders = {
+    "train": DataLoader(train_data, batch_size=64, shuffle=True),
+    "test": DataLoader(test_data, batch_size=64, shuffle=True)
+}
+
+# define model
+class CNN(nn.Module):
+
+    # define layers
+    def __init__(self):
+        super(CNN, self).__init__()
+        self.conv1 = nn.Conv2d(1, 10, kernel_size=5) # 1 = input channels, 10 = output channels, 5 = kernel size
+        self.conv2 = nn.Conv2d(10, 20, kernel_size=5) # 10 = input channels, 20 = output channels, 5 = kernel size from conv1
+        self.conv2_drop = nn.Dropout2d() # dropout layer
+        self.fc1 = nn.Linear(320, 50) # 320 = 20 * 4 * 4 (output of conv2) fc = fully connected
+        self.fc2 = nn.Linear(50, 10) # 10 = number of classes
+
+    # define forward pass
+    def forward(self, x):
+
+        # conv1 -> relu -> maxpool
+        x = F.relu(F.max_pool2d(self.conv1(x), 2))
+        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+        
+        # flatten -> relu -> dropout -> fully connected
+        x = x.view(-1, 320) # flatten
+        x = F.relu(self.fc1(x)) # relu
+        x = F.dropout(x, training=self.training) # dropout
+        x = self.fc2(x) # fully connected
+
+        # softmax
+        return F.softmax(x, dim=1)
+    
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+model = CNN().to(device)
+#model.load_state_dict(torch.load('\Digit_recon\model.pth'))
+
+learn_rate = 0.01
+
+optimizer = optim.Adam(model.parameters(), lr=learn_rate)
+
+# define loss function
+loss_fn  = nn.CrossEntropyLoss()
+
+# define training function
+def train(epoch, model):
+    model.train()
+    for batch_idx, (data, target) in enumerate(loaders["train"]):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        output = model(data)
+        loss = loss_fn(output, target)
+        loss.backward()
+        optimizer.step()
+        if batch_idx % 50 == 0:
+            print(f'Train Epoch: {epoch} [{batch_idx*len(data)}/{len(loaders["train"].dataset)} ({100. * batch_idx/len(loaders["train"]):.0f}%)]\t{loss.item():.6f}')
+    
+
+
+
+def test():
+    model.eval()
+
+    test_loss = 0
+    correct = 0
+
+    with torch.no_grad():
+        for data, target in loaders["test"]:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            test_loss += loss_fn(output, target).item()
+            pred = output.argmax(dim=1, keepdim=True)
+            correct += pred.eq(target.view_as(pred)).sum().item()
+
+    test_loss /= len(loaders["test"].dataset)
+    print(f"\nTest average loss: {test_loss:.4f}, accuracy: {correct}/{len(loaders['test'].dataset)} ({100. * correct/len(loaders['test'].dataset):.0f}%)\n")
+
+
+epoch = 5
+
+for epoch in range(1, epoch+1):
+    train(epoch, model=model)
+    test()
+
+torch.save(model.state_dict(), '\Digit_recon\model.pth')
+
+
+def img_test(model):
+
+    model.eval()
+    data, target = test_data[randint(0, len(test_data))]
+
+    data = data.unsqueeze(0).to(device)
+
+    output = model(data)
+    prob = F.softmax(output, dim=1)[0].cpu().detach().numpy()
+    pred = output.argmax(dim=1, keepdim=True).item()
+    image = data.squeeze(0).squeeze(0).cpu().numpy()
+
+    return image, pred, target, prob
+
+
+print("plotting images")
+
+def img_plot(model, iters=10):
+
+    # set window size
+    window_length = 6
+
+    # set table size
+    columns = math.ceil((math.sqrt(iters)))
+    rows = math.ceil(iters/columns)
+
+    window_high = window_length/columns*rows
+    
+    # set image size to be able to plot all images
+    imgsize = window_length/rows*1.2
+    textsize = min(math.sqrt(imgsize),imgsize)*6
+    space_in_between = imgsize/4
+
+    # set window size
+    plt.figure(figsize=(window_length, window_high))
+    plt.subplots_adjust(wspace=space_in_between, hspace=space_in_between)
+
+    # plot images
+    for i in range(iters):
+        plt.subplot(rows, columns, i+1)
+        image, pred, target, prob = img_test(model)   
+
+        #print prob
+        #     
+
+        plt.axis('off')
+        if pred == target:
+            plt.title(f'Predicted: {pred}, Probabilities: {prob}', color='green', fontsize=textsize)
+        else:
+            plt.title(f'Predicted: {pred}, Probabilities: {prob}', color='red', fontsize=textsize)
+        plt.imshow(image, cmap='gray')
+    plt.show()
+
+img_plot(model, iters=1)
+
+
+
+
+#plot image with probability distribution
+
+#create a draw function window for the user
+
+#create a function that takes the drawn image and converts it to a well formatted tensor
+
+#create a function that takes any image and converts it to a well formatted tensor

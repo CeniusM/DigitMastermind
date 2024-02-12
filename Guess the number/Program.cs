@@ -75,7 +75,6 @@ void PaintEvent(int mouseX, int mouseY)
 
 void DrawCanvas()
 {
-    window.ClearScreen(0, 0, 0);
     for (int i = 0; i < Res; i++)
     {
         for (int j = 0; j < Res; j++)
@@ -87,6 +86,12 @@ void DrawCanvas()
                 strength, strength, strength); // Color
         }
     }
+}
+
+void Draw()
+{
+    window.ClearScreen(0, 0, 0);
+    DrawCanvas();
 
     // Draw mouse cursor
     if (window.MouseX != -1)
@@ -139,7 +144,7 @@ void Window_KeyPressEvent(object? sender, WindowKeyPressEventArgs e)
 
 void Window_CycleDoneEvent(object? sender, WindowCycleDoneEventArgs e)
 {
-    DrawCanvas();
+    Draw();
 }
 
 void Window_MouseButtomDownEvent(object? sender, WindowMouseButtonDownEventArgs e)

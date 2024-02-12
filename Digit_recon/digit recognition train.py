@@ -63,7 +63,7 @@ class CNN(nn.Module):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = CNN().to(device)
-#model.load_state_dict(torch.load('\Digit_recon\model.pth'))
+#model.load_state_dict(torch.load('\Digit_recon\Models\model.pth'))
 
 learn_rate = 0.01
 
@@ -82,9 +82,15 @@ def train(epoch, model):
         loss = loss_fn(output, target)
         loss.backward()
         optimizer.step()
+
         if batch_idx % 50 == 0:
-            print(f'Train Epoch: {epoch} [{batch_idx*len(data)}/{len(loaders["train"].dataset)} ({100. * batch_idx/len(loaders["train"]):.0f}%)]\t{loss.item():.6f}')
-    
+            # Calculate the values
+            processed_samples = batch_idx * len(data)
+            total_samples = len(loaders["train"].dataset)
+            percentage = 100. * batch_idx / len(loaders["train"])
+            loss_value = loss.item()
+            # Print the values
+            print(f"\nTrain Epoch: {epoch} [{processed_samples}/{total_samples} \t({percentage:.0f}%)]\t{loss_value:.6f}\n")    
 
 
 
@@ -103,16 +109,22 @@ def test():
             correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(loaders["test"].dataset)
-    print(f"\nTest average loss: {test_loss:.4f}, accuracy: {correct}/{len(loaders['test'].dataset)} ({100. * correct/len(loaders['test'].dataset):.0f}%)\n")
+    accuracy = 100. * correct/len(loaders["test"].dataset)
+    print(f"\nTest average loss: {test_loss:.4f}, accuracy: {accuracy:.4f}%\n")
+
+    return accuracy
 
 
 epoch = 5
+accuracylist = []
 
 for epoch in range(1, epoch+1):
     train(epoch, model=model)
-    test()
+    accuracy = test()
+    accuracylist.append(accuracy)
 
-torch.save(model.state_dict(), '\Digit_recon\model.pth')
+
+torch.save(model.state_dict(), '\Digit_recon\Models\model.pth')
 
 
 def img_test(model):
@@ -162,12 +174,14 @@ def img_plot(model, iters=10):
 
         plt.axis('off')
         if pred == target:
-            plt.title(f'Predicted: {pred}, Probabilities: {prob}', color='green', fontsize=textsize)
+            plt.title(f'Predicted: {pred}', color='green', fontsize=textsize)
         else:
-            plt.title(f'Predicted: {pred}, Probabilities: {prob}', color='red', fontsize=textsize)
+            plt.title(f'Predicted: {pred}', color='red', fontsize=textsize)
         plt.imshow(image, cmap='gray')
     plt.show()
 
+
+print(accuracylist)
 img_plot(model, iters=1)
 
 

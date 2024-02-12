@@ -1,4 +1,5 @@
-﻿using Windowing;
+﻿using Guess_the_number;
+using Windowing;
 
 const int MaxWindSize = 800;
 
@@ -9,7 +10,7 @@ const int WindSize = PixelSize * Res;
 const int CursorSize = 10;
 
 DrawableWindow window = new DrawableWindow("Draw a number", WindSize, WindSize);
-Guess_the_number.Guessur guessur = new Guess_the_number.Guessur();
+Guessur guessur = new Guessur();
 Console.CursorVisible = false;
 
 double PaintStrength = 2;
@@ -40,19 +41,6 @@ void MakeGuess(string data)
     MakingAGuess = false;
 }
 
-string GetStrCanvas()
-{
-    string str = "";
-    for (int i = 0; i < Res; i++)
-    {
-        for (int j = 0; j < Res; j++)
-            str += Canvas[j, i].ToString("0.###") + "|";
-        str = str.Remove(str.Length - 1);
-        str += ";";
-    }
-    return str.Replace(",", ".").Remove(str.Length - 1);
-}
-
 void PaintEvent(int mouseX, int mouseY)
 {
     // Draw
@@ -81,13 +69,12 @@ void PaintEvent(int mouseX, int mouseY)
     }
 
     // Make new guess
-    string data = GetStrCanvas();
+    string data = CanvasUtil.EncodeCanvas(Canvas);
     Task.Run(() => MakeGuess(data));
 }
 
 void DrawCanvas()
 {
-    window.ClearScreen(0, 0, 0);
     for (int i = 0; i < Res; i++)
     {
         for (int j = 0; j < Res; j++)
@@ -99,6 +86,12 @@ void DrawCanvas()
                 strength, strength, strength); // Color
         }
     }
+}
+
+void Draw()
+{
+    window.ClearScreen(0, 0, 0);
+    DrawCanvas();
 
     // Draw mouse cursor
     if (window.MouseX != -1)
@@ -138,15 +131,20 @@ void Window_KeyPressEvent(object? sender, WindowKeyPressEventArgs e)
 {
     if (e.Key == Key.C)
         Array.Clear(Canvas);
-    if (e.Key == Key.L)
+    if (e.Key == Key.R)
         Console.Clear();
     if (e.Key == Key.P)
-        Console.WriteLine(GetStrCanvas());
+        Console.WriteLine(CanvasUtil.EncodeCanvas(Canvas));
+    if (e.Key == Key.L)
+    {
+        string str = Console.ReadLine()!;
+        Canvas = CanvasUtil.ToCanvas(str);
+    }
 }
 
 void Window_CycleDoneEvent(object? sender, WindowCycleDoneEventArgs e)
 {
-    DrawCanvas();
+    Draw();
 }
 
 void Window_MouseButtomDownEvent(object? sender, WindowMouseButtonDownEventArgs e)

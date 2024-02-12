@@ -10,15 +10,15 @@ namespace Guess_the_number
         public Guessur()
         {
             _proc = new Process();
-            _proc.StartInfo.FileName
-                = "C:\\Users\\ceniu\\AppData\\Local\\Programs\\Python\\Python312\\python.exe";
+            _proc.StartInfo.FileName = "python.exe";
             _proc.StartInfo.UseShellExecute = false;
             //_proc.StartInfo.CreateNoWindow = true;
             _proc.StartInfo.RedirectStandardInput = true;
             _proc.StartInfo.RedirectStandardOutput = true;
-            _proc.StartInfo.Arguments = "C:\\temp\\digit_rec.py";
+            _proc.StartInfo.Arguments = "digit_rec.py";
             if (!_proc.Start())
                 throw new Exception();
+            _proc.StandardInput.WriteLine("model.pth");
         }
 
         public string Guess(string data)

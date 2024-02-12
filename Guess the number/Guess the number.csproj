@@ -14,4 +14,13 @@
     <PackageReference Include="StbImageSharp" Version="2.27.13" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="digit_rec.py">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="model.pth">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

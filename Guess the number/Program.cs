@@ -32,10 +32,7 @@ void MakeGuess(string data)
 
     string guess = guessur.Guess(data);
 
-    //Console.SetCursorPosition(0, 0);
-    //Console.Write("I think it is: " + guess);
-
-    Console.Clear();
+    Console.SetCursorPosition(0, 0);
     Console.WriteLine(guess);
     
     MakingAGuess = false;

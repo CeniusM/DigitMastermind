@@ -14,10 +14,12 @@ import os
 
 
 
-learn_rate = 0.01
-epoch = 20
+learn_rate = 0.001
+epoch = 4
 btcs = 1024
 traintesting = False
+modelname = "model16_97.pth"
+create_new_model = True
 
 
 # load data
@@ -73,7 +75,8 @@ class CNN(nn.Module):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = CNN().to(device)
-model.load_state_dict(torch.load('Digit_recon\Models\model8_60.pth'))
+modelpath = f"Digit_recon\Models\{modelname}"
+model.load_state_dict(torch.load(modelpath))
 
 
 optimizer = optim.Adam(model.parameters(), lr=learn_rate)
@@ -160,17 +163,21 @@ for epoch in range(1, epoch+1):
         traindata_accuracy = traindata_test()
         traindata_accuracylist.append(traindata_accuracy)
 
+if epoch>0:
+    def savepath(savefolder, accuracylist):
+        path, dirs, files = next(os.walk(savefolder))
+        lastaccuracy = int(accuracylist[-1])
+        n = len(files)+1
+        return f"{savefolder}\\model{n}_{lastaccuracy}.pth"
 
-def savepath(savefolder, accuracylist):
-    path, dirs, files = next(os.walk(savefolder))
-    lastaccuracy = int(accuracylist[-1])
-    n = len(files)+1
-    return f"{savefolder}\\model{n}_{lastaccuracy}.pth"
 
+    savefolder = "Digit_recon\Models"
+    if modelname == "" or create_new_model:
+        savename = savepath(savefolder, accuracylist)
+    else:
+        savename = modelpath
 
-savefolder = "Digit_recon\Models"
-savename = savepath(savefolder, accuracylist)
-torch.save(model.state_dict(), savename)
+    torch.save(model.state_dict(), savename)
 
 
 def img_test(model):
@@ -187,8 +194,6 @@ def img_test(model):
 
     return image, pred, target, prob
 
-
-print("plotting images")
 
 def img_plot(model, iters=10):
 

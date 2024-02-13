@@ -70,7 +70,7 @@ class CanvasUtil
         return canvas;
     }
 
-    public static (int answer, double[,] canvas, double[,] original)[] MakeScrables(string file, CanvasRandomizer canvasRandomizer)
+    public static (int answer, double[,] canvas, double[,] original)[] MakeScrables(string file, CanvasRandomizer canvasRandomizer, int copiesOfSame = 10, string save = "")
     {
         string[] strings = File.ReadAllLines(file);
         int count = strings.Length;
@@ -87,10 +87,24 @@ class CanvasUtil
 
         for (int i = 0; i < count; i++)
         {
-            double[,] copy = new double[Res, Res];
-            Array.Copy(originals[i], copy, copy.LongLength);
-            canvasRandomizer.Scramble(copy);
-            items.Add((answers[i], copy, originals[i]));
+            for (int j = 0; j < copiesOfSame; j++)
+            {
+                double[,] copy = new double[Res, Res];
+                Array.Copy(originals[i], copy, copy.LongLength);
+                canvasRandomizer.Scramble(copy);
+                items.Add((answers[i], copy, originals[i]));
+            }
+        }
+
+        if (save != "")
+        {
+            if (!File.Exists(file))
+                File.Create(file);
+
+            List<string> strs = new List<string>();
+            foreach (var item in items)
+                strs.Add(item.answer + "?" + EncodeCanvas(item.canvas));
+            File.WriteAllLines(save, strs.ToArray());
         }
 
         return items.ToArray();

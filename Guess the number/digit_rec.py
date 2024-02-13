@@ -53,7 +53,7 @@ while True:
     tensor, lines = dataexctracter(inputdata)
     pred, probabilities = img_test(tensor, model)
     print("Predicted class:", pred)
-    for i, prob in enumerate(probabilities):
-        print("Probability for class {}: {:.2f}%".format(i, prob * 100))
-    print(probabilities)
+    # for i, prob in enumerate(probabilities):
+    #     print("Probability for class {}: {:.2f}%".format(i, prob * 100))
+    # print(probabilities)
     print("done")

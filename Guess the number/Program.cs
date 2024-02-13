@@ -113,7 +113,7 @@ void ShowTestData()
         noiseStrength: 0.3
         );
 
-    var data = CanvasUtil.MakeScrables("C:\\temp\\mnistdata.txt", randomizer);
+    var data = CanvasUtil.MakeScrables("C:\\temp\\mnistdata.txt", randomizer, 100);// "C:\\temp\\mnistdataScramble.txt");
 
     foreach (var item in data)
     {

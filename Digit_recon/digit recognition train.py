@@ -10,6 +10,13 @@ import math
 import numpy
 import matplotlib.pyplot as plt
 from random import randint
+import os
+
+
+
+learn_rate = 0.01
+epoch = 5
+
 
 # load data
 train_data = datasets.MNIST(
@@ -27,8 +34,8 @@ test_data = datasets.MNIST(
 
 
 loaders = {
-    "train": DataLoader(train_data, batch_size=64, shuffle=True),
-    "test": DataLoader(test_data, batch_size=64, shuffle=True)
+    "train": DataLoader(train_data, batch_size=1024, shuffle=True),
+    "test": DataLoader(test_data, batch_size=1024, shuffle=True)
 }
 
 # define model
@@ -63,9 +70,8 @@ class CNN(nn.Module):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = CNN().to(device)
-#model.load_state_dict(torch.load('\Digit_recon\Models\model.pth'))
+#model.load_state_dict(torch.load('Digit_recon\Models\model.pth'))
 
-learn_rate = 0.01
 
 optimizer = optim.Adam(model.parameters(), lr=learn_rate)
 
@@ -83,14 +89,14 @@ def train(epoch, model):
         loss.backward()
         optimizer.step()
 
-        if batch_idx % 50 == 0:
+        if batch_idx % 30 == 0:
             # Calculate the values
             processed_samples = batch_idx * len(data)
             total_samples = len(loaders["train"].dataset)
             percentage = 100. * batch_idx / len(loaders["train"])
             loss_value = loss.item()
             # Print the values
-            print(f"\nTrain Epoch: {epoch} [{processed_samples}/{total_samples} \t({percentage:.0f}%)]\t{loss_value:.6f}\n")    
+            print(f"Train Epoch: {epoch} [{processed_samples}/{total_samples} \t({percentage:.0f}%)]\t{loss_value:.6f}")    
 
 
 
@@ -110,12 +116,10 @@ def test():
 
     test_loss /= len(loaders["test"].dataset)
     accuracy = 100. * correct/len(loaders["test"].dataset)
-    print(f"\nTest average loss: {test_loss:.4f}, accuracy: {accuracy:.4f}%\n")
+    print(f"\nTest average loss: {test_loss:.4f}, accuracy: {accuracy:.2f}%\n")
 
     return accuracy
 
-
-epoch = 5
 accuracylist = []
 
 for epoch in range(1, epoch+1):
@@ -123,8 +127,18 @@ for epoch in range(1, epoch+1):
     accuracy = test()
     accuracylist.append(accuracy)
 
+def savepath(savefolder, accuracylist):
+    path, dirs, files = next(os.walk(savefolder))
+    accuracy = int(accuracylist[-1])
+    n = len(files)+1
+    return f"{savefolder}\\model{n}_{accuracy}.pth"
 
-torch.save(model.state_dict(), '\Digit_recon\Models\model.pth')
+
+savefolder = "Digit_recon\Models"
+savename = savepath(savefolder, accuracylist)
+#save model to 'savepath_{accuracy}.pth'
+torch.save(model.state_dict(), savename)
+
 
 
 def img_test(model):
@@ -182,6 +196,8 @@ def img_plot(model, iters=10):
 
 
 print(accuracylist)
+for a in accuracylist:
+    print(a,"%")
 img_plot(model, iters=1)
 
 

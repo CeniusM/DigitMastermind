@@ -3,7 +3,7 @@ using Windowing;
 
 const int MaxWindSize = 800;
 
-const int Res = 28; // Pixels on each axis
+const int Res = CanvasUtil.Res; // Pixels on each axis
 //const int Size = 50; // The size of each pixel
 const int PixelSize = MaxWindSize / Res;
 const int WindSize = PixelSize * Res;
@@ -23,7 +23,7 @@ bool MakingAGuess = false;
 // Run async
 void MakeGuess(string data)
 {
-    if (MakingAGuess ) 
+    if (MakingAGuess)
         return;
     MakingAGuess = true;
 
@@ -34,7 +34,7 @@ void MakeGuess(string data)
 
     Console.SetCursorPosition(0, 0);
     Console.WriteLine(guess);
-    
+
     MakingAGuess = false;
 }
 
@@ -104,6 +104,45 @@ void Draw()
     window.RenderToScreen();
 }
 
+void ShowTestData()
+{
+    CanvasRandomizer randomizer = new CanvasRandomizer(
+        maxRotation: 30,
+        maxMovement: 5,
+        maxZoom: 0.25,
+        noiseStrength: 0.3
+        );
+
+    var data = CanvasUtil.MakeScrables("C:\\temp\\mnistdata.txt", randomizer);
+
+    foreach (var item in data)
+    {
+        var answer = item.answer;
+        var c1 = item.original;
+        var c2 = item.canvas;
+
+        Console.WriteLine("This is " + answer);
+
+        for (int i = 0; i < Res; i++)
+        {
+            for (int j = 0; j < Res; j++)
+            {
+                byte b = (byte)(c1[i, j] * 255);
+                byte r = (byte)(c2[i, j] * 255);
+
+                window.DrawSquare(
+                    i * PixelSize, j * PixelSize, // Coord
+                    PixelSize, PixelSize, // Size
+                    r, 0, b); // Color
+            }
+        }
+
+        window.RenderToScreen();
+
+        Console.ReadLine();
+    }
+}
+
 window.CycleDoneEvent += Window_CycleDoneEvent;
 window.MouseButtomDownEvent += Window_MouseButtomDownEvent;
 window.MouseButtomUpEvent += Window_MouseButtomUpEvent;
@@ -132,6 +171,8 @@ void Window_KeyPressEvent(object? sender, WindowKeyPressEventArgs e)
         Console.Clear();
     if (e.Key == Key.P)
         Console.WriteLine(CanvasUtil.EncodeCanvas(Canvas));
+    if (e.Key == Key.T)
+        ShowTestData();
     if (e.Key == Key.L)
     {
         string str = Console.ReadLine()!;

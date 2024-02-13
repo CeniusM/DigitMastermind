@@ -1,4 +1,4 @@
-## digit recognition
+# digit recognition
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
@@ -15,7 +15,9 @@ import os
 
 
 learn_rate = 0.01
-epoch = 5
+epoch = 20
+btcs = 1024
+traintesting = False
 
 
 # load data
@@ -34,8 +36,9 @@ test_data = datasets.MNIST(
 
 
 loaders = {
-    "train": DataLoader(train_data, batch_size=1024, shuffle=True),
-    "test": DataLoader(test_data, batch_size=1024, shuffle=True)
+    "train": DataLoader(train_data, batch_size=btcs, shuffle=True),
+    "traintest": DataLoader(train_data, batch_size=btcs, shuffle=True),
+    "test": DataLoader(test_data, batch_size=btcs, shuffle=True)
 }
 
 # define model
@@ -70,7 +73,7 @@ class CNN(nn.Module):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = CNN().to(device)
-#model.load_state_dict(torch.load('Digit_recon\Models\model.pth'))
+model.load_state_dict(torch.load('Digit_recon\Models\model8_60.pth'))
 
 
 optimizer = optim.Adam(model.parameters(), lr=learn_rate)
@@ -81,6 +84,7 @@ loss_fn  = nn.CrossEntropyLoss()
 # define training function
 def train(epoch, model):
     model.train()
+    batch_percentage = loaders['train'].batch_size/len(loaders["train"])
     for batch_idx, (data, target) in enumerate(loaders["train"]):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -89,7 +93,8 @@ def train(epoch, model):
         loss.backward()
         optimizer.step()
 
-        if batch_idx % 30 == 0:
+
+        if batch_idx % batch_percentage == 0:
             # Calculate the values
             processed_samples = batch_idx * len(data)
             total_samples = len(loaders["train"].dataset)
@@ -120,25 +125,52 @@ def test():
 
     return accuracy
 
+if traintesting:
+    def traindata_test():
+        model.eval()
+
+        test_loss = 0
+        correct = 0
+
+        with torch.no_grad():
+            for data, target in loaders["traintest"]:
+                data, target = data.to(device), target.to(device)
+                output = model(data)
+                test_loss += loss_fn(output, target).item()
+                pred = output.argmax(dim=1, keepdim=True)
+                correct += pred.eq(target.view_as(pred)).sum().item()
+
+        test_loss /= len(loaders["traintest"].dataset)
+        accuracy = 100. * correct/len(loaders["traintest"].dataset)
+        print(f"\nTraintest average loss: {test_loss:.4f}, accuracy: {accuracy:.2f}%\n")
+
+        return accuracy
+
+
 accuracylist = []
+traindata_accuracylist = []
 
 for epoch in range(1, epoch+1):
     train(epoch, model=model)
+
     accuracy = test()
     accuracylist.append(accuracy)
 
+    if traintesting:
+        traindata_accuracy = traindata_test()
+        traindata_accuracylist.append(traindata_accuracy)
+
+
 def savepath(savefolder, accuracylist):
     path, dirs, files = next(os.walk(savefolder))
-    accuracy = int(accuracylist[-1])
+    lastaccuracy = int(accuracylist[-1])
     n = len(files)+1
-    return f"{savefolder}\\model{n}_{accuracy}.pth"
+    return f"{savefolder}\\model{n}_{lastaccuracy}.pth"
 
 
 savefolder = "Digit_recon\Models"
 savename = savepath(savefolder, accuracylist)
-#save model to 'savepath_{accuracy}.pth'
 torch.save(model.state_dict(), savename)
-
 
 
 def img_test(model):
@@ -194,11 +226,17 @@ def img_plot(model, iters=10):
         plt.imshow(image, cmap='gray')
     plt.show()
 
+if traintesting:
+    print(accuracylist, traindata_accuracylist)
+    for acc in range(len(accuracylist)):
+        print(f"{accuracylist[acc]:.1f}%\t{traindata_accuracylist[acc]:.1f}%")
+else:
+    print(accuracylist)
+    for acc in accuracylist:
+        print(f"{acc:.1f}%")
+img_plot(model, iters=25)
 
-print(accuracylist)
-for a in accuracylist:
-    print(a,"%")
-img_plot(model, iters=1)
+
 
 
 

@@ -40,10 +40,59 @@ class CanvasUtil
         return canvas;
     }
 
-    public static (int answer, double[,] canvas, double[,] original)[] MakeScrables(string file)
+    public static double[,] ToCanvasExpandZero(string data)
+    {
+        double[,] canvas = new double[Res, Res]; // Initialize the canvas
+        string[] lines = data.Split(';');
+        for (int i = 0; i < Res; i++)
+        {
+            string[] nums = lines[i].Split("|");
+            int index = 0;
+            for (int j = 0; j < Res;)
+            {
+                if (nums[index].StartsWith("!")) // Handling special case
+                {
+                    int zeroCount = int.Parse(nums[index].Substring(1)); // Extract the number after "!"
+                    for (int k = 0; k < zeroCount; k++)
+                    {
+                        canvas[j, i] = 0;
+                        j++; // Move to the next position
+                    }
+                }
+                else
+                {
+                    canvas[j, i] = double.Parse(nums[index].Replace(".", ",")); // Reverse the replacement for parsing
+                    j++; // Move to the next position
+                }
+                index++; // Move to the next string in nums
+            }
+        }
+        return canvas;
+    }
+
+    public static (int answer, double[,] canvas, double[,] original)[] MakeScrables(string file, CanvasRandomizer canvasRandomizer)
     {
         string[] strings = File.ReadAllLines(file);
+        int count = strings.Length;
 
-        throw new Exception();
+        double[][,] originals = new double[count][,];
+        int[] answers = new int[count];
+        for (int i = 0; i < count; i++)
+        {
+            answers[i] = strings[i].Take(1).First() - '0';
+            originals[i] = ToCanvasExpandZero(new(strings[i].TakeLast(strings[i].Length - 2).ToArray()));
+        }
+
+        List<(int answer, double[,] canvas, double[,] original)> items = new List<(int answer, double[,] canvas, double[,] original)>();
+
+        for (int i = 0; i < count; i++)
+        {
+            double[,] copy = new double[Res, Res];
+            Array.Copy(originals[i], copy, copy.LongLength);
+            canvasRandomizer.Scramble(copy);
+            items.Add((answers[i], copy, originals[i]));
+        }
+
+        return items.ToArray();
     }
 }

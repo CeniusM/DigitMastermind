@@ -14,11 +14,11 @@ import os
 
 
 
-learn_rate = 0.001
-epoch = 4
-btcs = 1024
+learn_rate = 0.0002
+epoch = 30
+btcs = 1000
 traintesting = False
-modelname = "model16_97.pth"
+modelname = "model18_9778.pth"
 create_new_model = True
 
 
@@ -36,6 +36,9 @@ test_data = datasets.MNIST(
     transform=ToTensor()
 )
 
+# print("data size: ", train_data[0][0].shape)
+# print("train data: ", train_data[0][0])
+# print("train target: ", train_data[0][1])
 
 loaders = {
     "train": DataLoader(train_data, batch_size=btcs, shuffle=True),
@@ -87,7 +90,7 @@ loss_fn  = nn.CrossEntropyLoss()
 # define training function
 def train(epoch, model):
     model.train()
-    batch_percentage = loaders['train'].batch_size/len(loaders["train"])
+    batch_percentage = int(len(loaders["train"])/4)-1 #percentage for printing
     for batch_idx, (data, target) in enumerate(loaders["train"]):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -166,7 +169,7 @@ for epoch in range(1, epoch+1):
 if epoch>0:
     def savepath(savefolder, accuracylist):
         path, dirs, files = next(os.walk(savefolder))
-        lastaccuracy = int(accuracylist[-1])
+        lastaccuracy = int(accuracylist[-1]*100)
         n = len(files)+1
         return f"{savefolder}\\model{n}_{lastaccuracy}.pth"
 
@@ -234,12 +237,12 @@ def img_plot(model, iters=10):
 if traintesting:
     print(accuracylist, traindata_accuracylist)
     for acc in range(len(accuracylist)):
-        print(f"{accuracylist[acc]:.1f}%\t{traindata_accuracylist[acc]:.1f}%")
+        print(f"{accuracylist[acc]:.2f}%\t{traindata_accuracylist[acc]:.2f}%")
 else:
     print(accuracylist)
     for acc in accuracylist:
-        print(f"{acc:.1f}%")
-img_plot(model, iters=25)
+        print(f"{acc:.2f}%")
+img_plot(model, iters=100)
 
 
 
